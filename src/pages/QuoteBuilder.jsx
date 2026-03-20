@@ -77,7 +77,10 @@ const initialAssembly = {
   pcbSource: "Provided by user",
 };
 
-const initialProcurement = { procurementSource: "By Vendor" };
+const initialProcurement = {
+  componentFile: null,
+  components: [{ partNumber: "", description: "", manufacturers: "" }],
+};
 
 const initialQuote = {
   name: "",
@@ -153,7 +156,10 @@ const QuoteBuilder = () => {
       (payload.services).assembly = { ...assemblyData, bomFile: assemblyData.bomFile?.name || null };
     }
     if (enabledTabs.includes("procurement") || selectedService === "procurement") {
-      (payload.services).procurement = procurementData;
+      (payload.services).procurement = {
+        componentFile: procurementData.componentFile?.name || null,
+        components: procurementData.components,
+      };
     }
     console.log("📋 Quote Request Submitted:", payload);
     setDrawerOpen(false);
@@ -256,9 +262,15 @@ const QuoteBuilder = () => {
     });
   }
   if (enabledTabs.includes("procurement") || selectedService === "procurement") {
+    const filledRows = procurementData.components.filter(
+      (row) => row.partNumber.trim() || row.description.trim() || row.manufacturers.trim()
+    );
     summaryItems.push({
       label: "Component Procurement",
-      details: [`Source: ${procurementData.procurementSource}`],
+      details: [
+        procurementData.componentFile ? `📎 ${procurementData.componentFile.name}` : "No file uploaded",
+        `${filledRows.length} component row${filledRows.length !== 1 ? "s" : ""} added`,
+      ],
     });
   }
 
@@ -516,7 +528,7 @@ const QuoteBuilder = () => {
                               )}
                             </h2>
                             <p className="text-sm text-muted-foreground mt-1">
-                              Choose your procurement preferences
+                              Upload your component list or add it manually
                             </p>
                           </div>
                           <ProcurementForm data={procurementData} onChange={setProcurementData} />
