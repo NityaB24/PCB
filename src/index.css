@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 210 20% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 20% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 20% 12%;
+
+    --primary: 155 85% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 15% 93%;
+    --secondary-foreground: 210 15% 30%;
+
+    --muted: 210 12% 92%;
+    --muted-foreground: 210 8% 45%;
+
+    --accent: 195 85% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 210 15% 88%;
+    --input: 210 15% 88%;
+    --ring: 155 85% 35%;
+
+    --radius: 0.5rem;
+
+    --pcb-glow: 155 85% 35%;
+    --pcb-trace: 155 50% 70%;
+    --pcb-copper: 32 70% 55%;
+    --pcb-substrate: 210 15% 95%;
+  }
+
+  .dark {
+    --background: 200 25% 5%;
+    --foreground: 180 10% 90%;
+
+    --card: 200 20% 8%;
+    --card-foreground: 180 10% 90%;
+
+    --popover: 200 20% 8%;
+    --popover-foreground: 180 10% 90%;
+
+    --primary: 155 85% 45%;
+    --primary-foreground: 200 25% 5%;
+
+    --secondary: 200 15% 14%;
+    --secondary-foreground: 180 10% 85%;
+
+    --muted: 200 15% 12%;
+    --muted-foreground: 200 10% 55%;
+
+    --accent: 195 90% 50%;
+    --accent-foreground: 200 25% 5%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 200 15% 16%;
+    --input: 200 15% 16%;
+    --ring: 155 85% 45%;
+
+    --pcb-glow: 155 85% 45%;
+    --pcb-trace: 155 60% 25%;
+    --pcb-copper: 32 80% 55%;
+    --pcb-substrate: 200 20% 10%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
+  }
+
+  code, .mono {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+}
+
+/* PCB trace pattern background */
+.pcb-grid {
+  background-image:
+    linear-gradient(hsl(var(--pcb-trace) / 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--pcb-trace) / 0.15) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Glow effect */
+.glow-primary {
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.3), 0 0 60px hsl(var(--primary) / 0.1);
+}
+
+.glow-text {
+  text-shadow: 0 0 30px hsl(var(--primary) / 0.5);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
+}

@@ -1,0 +1,65 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Lockfiles (optional — keep if you want to track locks)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Vite / build output
+dist/
+build/
+.vite/
+
+# Environment files
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Coverage / test
+coverage/
+.nyc_output/
+
+# Misc caches
+.cache/
+.cache-loader/
+.history/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Mac specific
+Icon
+
+# Optional: local settings
+.local/
+
+# End of file
