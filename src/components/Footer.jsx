@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 
 const Footer = () => {
   return (
@@ -6,7 +6,7 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="grid gap-8 md:grid-cols-4">
           <div className="md:col-span-2">
-            <Link to="/" className="flex items-center gap-2 mb-3">
+            <Link href="/" className="flex items-center gap-2 mb-3">
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary-foreground))" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
@@ -22,18 +22,18 @@ const Footer = () => {
           <div>
             <h4 className="text-sm font-semibold mb-3">Services</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/quote" className="hover:text-primary transition-colors">PCB Fabrication</Link></li>
-              <li><Link to="/quote" className="hover:text-primary transition-colors">PCB Assembly</Link></li>
-              <li><Link to="/quote" className="hover:text-primary transition-colors">Component Procurement</Link></li>
+              <li><Link href="/quote" className="hover:text-primary transition-colors">PCB Fabrication</Link></li>
+              <li><Link href="/quote" className="hover:text-primary transition-colors">PCB Assembly</Link></li>
+              <li><Link href="/quote" className="hover:text-primary transition-colors">Component Procurement</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-sm font-semibold mb-3">Company</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
-              <li><Link to="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
-              <li><Link to="/quote" className="hover:text-primary transition-colors">Get a Quote</Link></li>
+              <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+              <li><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
+              <li><Link href="/quote" className="hover:text-primary transition-colors">Get a Quote</Link></li>
             </ul>
           </div>
         </div>

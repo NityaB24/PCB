@@ -1,10 +1,12 @@
+"use client";
+
 import { useState, useCallback } from "react";
 
 const FileUpload = ({ label, accept, onFileSelect, file }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDrop = useCallback(
-    () => {
+    (e) => {
       e.preventDefault();
       setIsDragging(false);
       const dropped = e.dataTransfer.files[0];
@@ -13,7 +15,7 @@ const FileUpload = ({ label, accept, onFileSelect, file }) => {
     [onFileSelect]
   );
 
-  const handleDragOver = useCallback(() => {
+  const handleDragOver = useCallback((e) => {
     e.preventDefault();
     setIsDragging(true);
   }, []);

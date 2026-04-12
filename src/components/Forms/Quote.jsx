@@ -1,3 +1,5 @@
+"use client";
+
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring";
 const labelClass = "text-sm font-medium text-foreground";

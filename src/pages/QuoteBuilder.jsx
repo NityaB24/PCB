@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
@@ -5,6 +7,7 @@ import Footer from "../components/Footer";
 import FabricationForm from "../components/Forms/Fabrication";
 import AssemblyForm from "../components/Forms/Assembly";
 import ProcurementForm from "../components/Forms/Procurement";
+import StencilForm from "../components/Forms/Stencil";
 import QuoteFormSection from "../components/Forms/Quote";
 import {
   Drawer,
@@ -16,13 +19,21 @@ import {
   DrawerClose,
 } from "../components/ui/drawer";
 
-
 const serviceInfo = {
   fabrication: {
     label: "PCB Fabrication",
     desc: "Custom PCB boards manufactured to your exact specifications",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <rect x="2" y="2" width="20" height="20" rx="3" />
         <circle cx="8" cy="8" r="1.5" />
         <circle cx="16" cy="8" r="1.5" />
@@ -36,7 +47,16 @@ const serviceInfo = {
     label: "PCB Assembly",
     desc: "Component mounting and soldering by our expert team",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
       </svg>
     ),
@@ -45,10 +65,38 @@ const serviceInfo = {
     label: "Procurement",
     desc: "Source components and materials through our supply chain",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
         <path d="M3 6h18" />
         <path d="M16 10a4 4 0 0 1-8 0" />
+      </svg>
+    ),
+  },
+  stencil: {
+    label: "Stencil",
+    desc: "Upload Gerber file for stencil production",
+    icon: (
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M3 9h18M9 3v18" />
       </svg>
     ),
   },
@@ -71,16 +119,16 @@ const initialFab = {
 const initialAssembly = {
   bomFile: null,
   units: "",
-  stencil: "Procure from us",
+  pcbStencilOption: "None",
   solderType: "ROHS",
   componentsSource: "Provided by user",
-  pcbSource: "Provided by user",
 };
 
-const initialProcurement = {
-  componentFile: null,
-  components: [{ partNumber: "", description: "", manufacturers: "" }],
+const initialStencil = {
+  gerberFile: null,
 };
+
+const initialProcurement = { procurementSource: "By Vendor" };
 
 const initialQuote = {
   name: "",
@@ -103,28 +151,38 @@ const QuoteBuilder = () => {
   const [activeConfigTab, setActiveConfigTab] = useState("fabrication");
   const [fabData, setFabData] = useState(initialFab);
   const [assemblyData, setAssemblyData] = useState(initialAssembly);
+  const [stencilData, setStencilData] = useState(initialStencil);
   const [procurementData, setProcurementData] = useState(initialProcurement);
   const [quoteData, setQuoteData] = useState(initialQuote);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Derive which tabs are visible based on selected service + assembly choices
   const enabledTabs = useMemo(() => {
     if (!selectedService) return [];
     if (selectedService !== "assembly") return [selectedService];
 
     const tabs = ["assembly"];
-    if (assemblyData.pcbSource === "Fabricate from us") {
+
+    if (assemblyData.pcbStencilOption === "Only Stencil from us") {
+      tabs.push("stencil");
+    } else if (
+      assemblyData.pcbStencilOption === "Only Fabrication from us" ||
+      assemblyData.pcbStencilOption === "Both Stencil and Fabrication from us"
+    ) {
       tabs.push("fabrication");
     }
+
     if (assemblyData.componentsSource === "Procure from us") {
       tabs.push("procurement");
     }
     return tabs;
-  }, [selectedService, assemblyData.pcbSource, assemblyData.componentsSource]);
+  }, [
+    selectedService,
+    assemblyData.pcbStencilOption,
+    assemblyData.componentsSource,
+  ]);
 
-  // Keep activeConfigTab in sync
   useEffect(() => {
     if (enabledTabs.length > 0 && !enabledTabs.includes(activeConfigTab)) {
       setActiveConfigTab(enabledTabs[0]);
@@ -140,7 +198,8 @@ const QuoteBuilder = () => {
     const errs = {};
     if (!quoteData.name.trim()) errs.name = "Name is required";
     if (!quoteData.email.trim()) errs.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(quoteData.email)) errs.email = "Invalid email";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(quoteData.email))
+      errs.email = "Invalid email";
     if (!quoteData.phone.trim()) errs.phone = "Phone is required";
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -150,16 +209,27 @@ const QuoteBuilder = () => {
     if (!validate()) return;
     const payload = { contact: quoteData, services: {} };
     if (enabledTabs.includes("fabrication")) {
-      (payload.services).fabrication = { ...fabData, gerberFile: fabData.gerberFile?.name || null };
+      payload.services.fabrication = {
+        ...fabData,
+        gerberFile: fabData.gerberFile?.name || null,
+      };
+    }
+    if (enabledTabs.includes("stencil")) {
+      payload.services.stencil = {
+        gerberFile: stencilData.gerberFile?.name || null,
+      };
     }
     if (enabledTabs.includes("assembly")) {
-      (payload.services).assembly = { ...assemblyData, bomFile: assemblyData.bomFile?.name || null };
-    }
-    if (enabledTabs.includes("procurement") || selectedService === "procurement") {
-      (payload.services).procurement = {
-        componentFile: procurementData.componentFile?.name || null,
-        components: procurementData.components,
+      payload.services.assembly = {
+        ...assemblyData,
+        bomFile: assemblyData.bomFile?.name || null,
       };
+    }
+    if (
+      enabledTabs.includes("procurement") ||
+      selectedService === "procurement"
+    ) {
+      payload.services.procurement = procurementData;
     }
     console.log("📋 Quote Request Submitted:", payload);
     setDrawerOpen(false);
@@ -188,6 +258,28 @@ const QuoteBuilder = () => {
     setStep((s) => Math.max(s - 1, 0));
   };
 
+  const activeTabIndex = enabledTabs.indexOf(activeConfigTab);
+  const isLastConfigTab =
+    step === 1 && activeTabIndex === enabledTabs.length - 1;
+
+  const handlePrimaryAction = () => {
+    if (
+      step === 1 &&
+      enabledTabs.length > 0 &&
+      activeTabIndex < enabledTabs.length - 1
+    ) {
+      setActiveConfigTab(enabledTabs[activeTabIndex + 1]);
+      return;
+    }
+
+    if (step === 2) {
+      openContactDrawer();
+      return;
+    }
+
+    goNext();
+  };
+
   if (submitted) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -199,14 +291,29 @@ const QuoteBuilder = () => {
             className="text-center max-w-md px-4"
           >
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="hsl(var(--primary))"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M20 6L9 17l-5-5" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold mb-3">Quote Request Submitted!</h2>
+            <h2 className="text-2xl font-bold mb-3">
+              Quote Request Submitted!
+            </h2>
             <p className="text-muted-foreground mb-6">
-              Thank you, {quoteData.name}. We'll review your requirements and get back to you at{" "}
-              <span className="text-primary font-mono text-sm">{quoteData.email}</span> with a detailed quotation.
+              Thank you, {quoteData.name}. We'll review your requirements and
+              get back to you at{" "}
+              <span className="text-primary font-mono text-sm">
+                {quoteData.email}
+              </span>{" "}
+              with a detailed quotation.
             </p>
             <button
               onClick={() => {
@@ -215,6 +322,7 @@ const QuoteBuilder = () => {
                 setSelectedService(null);
                 setFabData(initialFab);
                 setAssemblyData(initialAssembly);
+                setStencilData(initialStencil);
                 setProcurementData(initialProcurement);
                 setQuoteData(initialQuote);
                 setErrors({});
@@ -238,7 +346,9 @@ const QuoteBuilder = () => {
       details: [
         `${fabData.layers} Layer${fabData.layers !== "1" ? "s" : ""}`,
         fabData.quantity ? `Qty: ${fabData.quantity}` : "",
-        fabData.width && fabData.height ? `${fabData.width}×${fabData.height}mm` : "",
+        fabData.width && fabData.height
+          ? `${fabData.width}×${fabData.height}mm`
+          : "",
         fabData.boardType,
         fabData.thickness,
         fabData.copperThickness,
@@ -248,29 +358,35 @@ const QuoteBuilder = () => {
       ].filter(Boolean),
     });
   }
+  if (enabledTabs.includes("stencil")) {
+    summaryItems.push({
+      label: "Stencil",
+      details: [
+        stencilData.gerberFile
+          ? `📎 ${stencilData.gerberFile.name}`
+          : "No Gerber file uploaded",
+      ],
+    });
+  }
   if (enabledTabs.includes("assembly")) {
     summaryItems.push({
       label: "PCB Assembly",
       details: [
         assemblyData.units ? `${assemblyData.units} units` : "",
-        `Stencil: ${assemblyData.stencil}`,
         `Solder: ${assemblyData.solderType}`,
         `Components: ${assemblyData.componentsSource}`,
-        `PCB: ${assemblyData.pcbSource}`,
+        `Fabrication & Stencil: ${assemblyData.pcbStencilOption}`,
         assemblyData.bomFile ? `📎 ${assemblyData.bomFile.name}` : "",
       ].filter(Boolean),
     });
   }
-  if (enabledTabs.includes("procurement") || selectedService === "procurement") {
-    const filledRows = procurementData.components.filter(
-      (row) => row.partNumber.trim() || row.description.trim() || row.manufacturers.trim()
-    );
+  if (
+    enabledTabs.includes("procurement") ||
+    selectedService === "procurement"
+  ) {
     summaryItems.push({
-      label: "Component Procurement",
-      details: [
-        procurementData.componentFile ? `📎 ${procurementData.componentFile.name}` : "No file uploaded",
-        `${filledRows.length} component row${filledRows.length !== 1 ? "s" : ""} added`,
-      ],
+      label: "Procurement",
+      details: [`Source: ${procurementData.procurementSource}`],
     });
   }
 
@@ -280,9 +396,12 @@ const QuoteBuilder = () => {
       <main className="flex-1 pt-16">
         <div className="container mx-auto px-4 py-8 sm:py-10">
           <div className="max-w-4xl mx-auto">
-
             {/* Header */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8"
+            >
               <h1 className="text-3xl font-bold mb-2">
                 Build Your <span className="text-primary">Quote</span>
               </h1>
@@ -295,10 +414,13 @@ const QuoteBuilder = () => {
             <div className="mb-8">
               <div className="flex items-center gap-0">
                 {steps.map((s, i) => {
-                  const isActive = i === step;
+                  const isActive = i === step || (i === 2 && drawerOpen);
                   const isComplete = i < step;
                   return (
-                    <div key={s.key} className="flex items-center flex-1 last:flex-initial">
+                    <div
+                      key={s.key}
+                      className="flex items-center flex-1 last:flex-initial"
+                    >
                       <button
                         type="button"
                         onClick={() => {
@@ -308,15 +430,29 @@ const QuoteBuilder = () => {
                           isActive
                             ? "bg-primary text-primary-foreground"
                             : isComplete
-                            ? "bg-primary/15 text-primary cursor-pointer hover:bg-primary/25"
-                            : "bg-muted text-muted-foreground"
+                              ? "bg-primary/15 text-primary cursor-pointer hover:bg-primary/25"
+                              : "bg-muted text-muted-foreground"
                         }`}
                       >
-                        <span className={`flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-xs font-bold ${
-                          isActive ? "bg-primary-foreground/20" : isComplete ? "bg-primary/20" : "bg-background/50"
-                        }`}>
+                        <span
+                          className={`flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-xs font-bold ${
+                            isActive
+                              ? "bg-primary-foreground/20"
+                              : isComplete
+                                ? "bg-primary/20"
+                                : "bg-background/50"
+                          }`}
+                        >
                           {isComplete ? (
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                            >
                               <path d="M20 6L9 17l-5-5" />
                             </svg>
                           ) : (
@@ -349,7 +485,15 @@ const QuoteBuilder = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-6 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 8v4M12 16h.01" />
                 </svg>
@@ -359,7 +503,7 @@ const QuoteBuilder = () => {
 
             {/* Step Content */}
             <AnimatePresence mode="wait">
-              {/* STEP 0: Select Service (single) */}
+              {/* STEP 0: Select Service */}
               {step === 0 && (
                 <motion.div
                   key="step-select"
@@ -372,7 +516,7 @@ const QuoteBuilder = () => {
                     Choose the service you need.
                   </p>
                   <div className="grid gap-4 sm:grid-cols-3">
-                    {(Object.keys(serviceInfo)).map((key) => {
+                    {["fabrication", "assembly", "procurement"].map((key) => {
                       const info = serviceInfo[key];
                       const isOn = selectedService === key;
                       return (
@@ -386,10 +530,13 @@ const QuoteBuilder = () => {
                               : "border-border bg-card hover:border-muted-foreground/40 hover:shadow-sm"
                           }`}
                         >
-                          {/* Radio indicator */}
-                          <div className={`absolute top-4 right-4 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all ${
-                            isOn ? "border-primary bg-primary" : "border-muted-foreground/30"
-                          }`}>
+                          <div
+                            className={`absolute top-4 right-4 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all ${
+                              isOn
+                                ? "border-primary bg-primary"
+                                : "border-muted-foreground/30"
+                            }`}
+                          >
                             {isOn && (
                               <motion.div
                                 initial={{ scale: 0 }}
@@ -398,14 +545,21 @@ const QuoteBuilder = () => {
                               />
                             )}
                           </div>
-
-                          <div className={`mb-3 flex h-12 w-12 items-center justify-center rounded-lg transition-colors ${
-                            isOn ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground group-hover:text-foreground"
-                          }`}>
+                          <div
+                            className={`mb-3 flex h-12 w-12 items-center justify-center rounded-lg transition-colors ${
+                              isOn
+                                ? "bg-primary/15 text-primary"
+                                : "bg-muted text-muted-foreground group-hover:text-foreground"
+                            }`}
+                          >
                             {info.icon}
                           </div>
-                          <h3 className="text-sm font-semibold mb-1">{info.label}</h3>
-                          <p className="text-xs text-muted-foreground leading-relaxed">{info.desc}</p>
+                          <h3 className="text-sm font-semibold mb-1">
+                            {info.label}
+                          </h3>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {info.desc}
+                          </p>
                         </button>
                       );
                     })}
@@ -422,9 +576,8 @@ const QuoteBuilder = () => {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.25 }}
                 >
-                  {/* Tabs for visible services */}
                   {enabledTabs.length > 1 && (
-                    <div className="mx-auto sm:mx-0 flex gap-1 mb-6 p-1 rounded-lg bg-muted/50 border border-border w-fit">
+                    <div className="mx-auto mb-6 flex w-fit gap-1 p-1 rounded-xl border border-border bg-muted/40 shadow-sm">
                       {enabledTabs.map((key) => {
                         const info = serviceInfo[key];
                         const isActive = activeConfigTab === key;
@@ -434,112 +587,166 @@ const QuoteBuilder = () => {
                             key={key}
                             type="button"
                             onClick={() => setActiveConfigTab(key)}
-                            className={`relative flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
+                            className={`relative flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
                               isActive
-                                ? "bg-background text-foreground shadow-sm"
-                                : "text-muted-foreground hover:text-foreground"
+                                ? "border border-primary/30 bg-primary/10 text-primary shadow-md shadow-primary/30"
+                                : "border border-transparent text-muted-foreground hover:text-foreground hover:bg-background/80"
                             }`}
                           >
-                            <span className="hidden sm:inline">{info.label}</span>
-                            <span className="sm:hidden">{info.label.replace("PCB ", "")}</span>
-                            {/* {isAutoAdded && (
-                              <span className="ml-1 inline-flex h-4 items-center rounded bg-primary/15 px-1.5 text-[10px] font-semibold text-primary">
-                                Auto
-                              </span>
-                            )} */}
+                            <span className="hidden sm:inline">
+                              {info.label}
+                            </span>
+                            <span className="sm:hidden">
+                              {info.label.replace("PCB ", "")}
+                            </span>
                           </button>
                         );
                       })}
                     </div>
                   )}
 
-                  {/* Form area */}
                   <div className="rounded-xl border border-border bg-card">
                     <AnimatePresence mode="wait">
-                      {activeConfigTab === "fabrication" && enabledTabs.includes("fabrication") && (
-                        <motion.div
-                          key="fab"
-                          initial={{ opacity: 0, x: -15 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 15 }}
-                          transition={{ duration: 0.2 }}
-                          className="p-5 sm:p-6"
-                        >
-                          <div className="mb-5 pb-4 border-b border-border">
-                            <h2 className="text-lg font-semibold flex items-center gap-2">
-                              <span className="text-primary">{serviceInfo.fabrication.icon}</span>
-                              PCB Fabrication
-                              {selectedService === "assembly" && (
-                                <span className="ml-2 inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      {activeConfigTab === "fabrication" &&
+                        enabledTabs.includes("fabrication") && (
+                          <motion.div
+                            key="fab"
+                            initial={{ opacity: 0, x: -15 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 15 }}
+                            transition={{ duration: 0.2 }}
+                            className="p-5 sm:p-6"
+                          >
+                            <div className="mb-5 pb-4 border-b border-border">
+                              <h2 className="flex flex-wrap items-center gap-2 text-[15px] sm:text-lg font-semibold">
+                                <span className="inline-flex items-center gap-2">
+                                  <span className="text-primary">
+                                    {serviceInfo.fabrication.icon}
+                                  </span>
+                                  <span className="whitespace-nowrap">
+                                    PCB Fabrication
+                                  </span>
+                                </span>
+                                {selectedService === "assembly" && (
+                                  <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] sm:text-xs font-medium text-primary whitespace-nowrap">
+                                    Added via Assembly
+                                  </span>
+                                )}
+                              </h2>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Configure your board specifications below
+                              </p>
+                            </div>
+                            <FabricationForm
+                              data={fabData}
+                              onChange={setFabData}
+                            />
+                          </motion.div>
+                        )}
+
+                      {activeConfigTab === "stencil" &&
+                        enabledTabs.includes("stencil") && (
+                          <motion.div
+                            key="stencil"
+                            initial={{ opacity: 0, x: -15 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 15 }}
+                            transition={{ duration: 0.2 }}
+                            className="p-5 sm:p-6"
+                          >
+                            <div className="mb-5 pb-4 border-b border-border">
+                              <h2 className="flex flex-wrap items-center gap-2 text-[15px] sm:text-lg font-semibold">
+                                <span className="inline-flex items-center gap-2">
+                                  <span className="text-primary">
+                                    {serviceInfo.stencil.icon}
+                                  </span>
+                                  <span className="whitespace-nowrap">
+                                    Stencil
+                                  </span>
+                                </span>
+                                <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] sm:text-xs font-medium text-primary whitespace-nowrap">
                                   Added via Assembly
                                 </span>
-                              )}
-                            </h2>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Configure your board specifications below
-                            </p>
-                          </div>
-                          <FabricationForm data={fabData} onChange={setFabData} />
-                        </motion.div>
-                      )}
+                              </h2>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Upload your Gerber file for stencil production
+                              </p>
+                            </div>
+                            <StencilForm
+                              data={stencilData}
+                              onChange={setStencilData}
+                            />
+                          </motion.div>
+                        )}
 
-                      {activeConfigTab === "assembly" && enabledTabs.includes("assembly") && (
-                        <motion.div
-                          key="asm"
-                          initial={{ opacity: 0, x: -15 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 15 }}
-                          transition={{ duration: 0.2 }}
-                          className="p-5 sm:p-6"
-                        >
-                          <div className="mb-5 pb-4 border-b border-border">
-                            <h2 className="text-lg font-semibold flex items-center gap-2">
-                              <span className="text-primary">{serviceInfo.assembly.icon}</span>
-                              PCB Assembly
-                            </h2>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Configure assembly requirements
-                            </p>
-                          </div>
-                          <AssemblyForm
-                            data={assemblyData}
-                            onChange={setAssemblyData}
-                          />
-                        </motion.div>
-                      )}
-
-                      {activeConfigTab === "procurement" && enabledTabs.includes("procurement") && (
-                        <motion.div
-                          key="proc"
-                          initial={{ opacity: 0, x: -15 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 15 }}
-                          transition={{ duration: 0.2 }}
-                          className="p-5 sm:p-6"
-                        >
-                          <div className="mb-5 pb-4 border-b border-border">
-                            <h2 className="text-lg font-semibold flex items-center gap-2">
-                              <span className="text-primary">{serviceInfo.procurement.icon}</span>
-                              Component Procurement
-                              {selectedService === "assembly" && (
-                                <span className="ml-2 inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                                  Added via Assembly
+                      {activeConfigTab === "assembly" &&
+                        enabledTabs.includes("assembly") && (
+                          <motion.div
+                            key="asm"
+                            initial={{ opacity: 0, x: -15 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 15 }}
+                            transition={{ duration: 0.2 }}
+                            className="p-5 sm:p-6"
+                          >
+                            <div className="mb-5 pb-4 border-b border-border">
+                              <h2 className="text-lg font-semibold flex items-center gap-2">
+                                <span className="text-primary">
+                                  {serviceInfo.assembly.icon}
                                 </span>
-                              )}
-                            </h2>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Upload your component list or add it manually
-                            </p>
-                          </div>
-                          <ProcurementForm data={procurementData} onChange={setProcurementData} />
-                        </motion.div>
-                      )}
+                                PCB Assembly
+                              </h2>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Configure assembly requirements
+                              </p>
+                            </div>
+                            <AssemblyForm
+                              data={assemblyData}
+                              onChange={setAssemblyData}
+                            />
+                          </motion.div>
+                        )}
+
+                      {activeConfigTab === "procurement" &&
+                        enabledTabs.includes("procurement") && (
+                          <motion.div
+                            key="proc"
+                            initial={{ opacity: 0, x: -15 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 15 }}
+                            transition={{ duration: 0.2 }}
+                            className="p-5 sm:p-6"
+                          >
+                            <div className="mb-5 pb-4 border-b border-border">
+                              <h2 className="flex flex-wrap items-center gap-2 text-[15px] sm:text-lg font-semibold">
+                                <span className="inline-flex items-center gap-2">
+                                  <span className="text-primary">
+                                    {serviceInfo.procurement.icon}
+                                  </span>
+                                  <span className="whitespace-nowrap">
+                                    Component Procurement
+                                  </span>
+                                </span>
+                                {selectedService === "assembly" && (
+                                  <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] sm:text-xs font-medium text-primary whitespace-nowrap">
+                                    Added via Assembly
+                                  </span>
+                                )}
+                              </h2>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Upload your component list or add it manually
+                              </p>
+                            </div>
+                            <ProcurementForm
+                              data={procurementData}
+                              onChange={setProcurementData}
+                            />
+                          </motion.div>
+                        )}
                     </AnimatePresence>
                   </div>
                 </motion.div>
               )}
-
-              {/* STEP 2: Review */}
               {step === 2 && (
                 <motion.div
                   key="step-review"
@@ -550,20 +757,28 @@ const QuoteBuilder = () => {
                 >
                   <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
                     <div className="mb-5 pb-4 border-b border-border">
-                      <h2 className="text-lg font-semibold">Review Your Configuration</h2>
+                      <h2 className="text-lg font-semibold">
+                        Review Your Configuration
+                      </h2>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Check your selected services and specifications before sending your request.
+                        Check your selected services and specifications before
+                        sending your request.
                       </p>
                     </div>
 
                     <div className="grid gap-4">
                       {summaryItems.map((item, index) => (
-                        <div key={item.label} className="rounded-lg border border-border bg-secondary/20 p-4">
+                        <div
+                          key={item.label}
+                          className="rounded-lg border border-border bg-secondary/20 p-4"
+                        >
                           <div className="mb-3 flex items-center gap-2">
                             <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                               {index + 1}
                             </span>
-                            <h4 className="text-sm font-semibold text-foreground">{item.label}</h4>
+                            <h4 className="text-sm font-semibold text-foreground">
+                              {item.label}
+                            </h4>
                           </div>
                           <div className="flex flex-wrap gap-2">
                             {item.details.map((d, i) => (
@@ -581,7 +796,11 @@ const QuoteBuilder = () => {
 
                     <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-4">
                       <p className="text-sm text-muted-foreground">
-                        Next step: click <span className="font-semibold text-foreground">Send Request</span> to provide your contact details in the drawer.
+                        Next step: click{" "}
+                        <span className="font-semibold text-foreground">
+                          Send Request
+                        </span>{" "}
+                        to provide your contact details in the drawer.
                       </p>
                     </div>
                   </div>
@@ -597,7 +816,15 @@ const QuoteBuilder = () => {
                   onClick={goBack}
                   className="flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  >
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                   </svg>
                   Back
@@ -608,11 +835,25 @@ const QuoteBuilder = () => {
 
               <button
                 type="button"
-                onClick={step === 2 ? openContactDrawer : goNext}
+                onClick={handlePrimaryAction}
                 className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:brightness-110 glow-primary"
               >
-                {step === 1 ? "Review & Submit" : step === 2 ? "Send Request" : "Continue"}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                {step === 2
+                  ? "Send Request"
+                  : step === 1
+                    ? isLastConfigTab
+                      ? "Review & Submit"
+                      : "Next Step"
+                    : "Continue"}
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </button>
@@ -620,7 +861,26 @@ const QuoteBuilder = () => {
 
             {step === 0 && (
               <p className="mt-4 text-center text-xs text-muted-foreground">
-                No instant pricing — our team will review and provide a detailed quotation via email.
+                <span className="relative inline-block pb-2">
+                  <span className="relative z-10">No instant pricing</span>
+                  <svg
+                    width="90"
+                    height="5"
+                    viewBox="0 0 90 5"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="absolute -bottom-0.5 left-0 text-primary"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M28.7084 0.102796C26.5181 0.173144 22.6779 0.31384 20.1747 0.415189C17.6714 0.516538 12.1944 0.650931 8.00342 0.713785C-0.0347292 0.834552 -0.237262 0.856525 0.0848703 1.57414C0.160852 1.74363 0.416864 2.06351 0.653786 2.28512L1.08439 2.68813L9.80777 2.57503C14.6056 2.51285 19.413 2.39737 20.4907 2.31833C21.5685 2.2393 31.8943 2.07714 43.437 1.95808C59.595 1.79132 64.9764 1.7874 66.8258 1.94138C68.1469 2.05142 70.0334 2.1405 71.0179 2.13965C73.9222 2.13659 81.7415 2.81792 82.5025 3.14019L82.8818 3.30082L82.5025 3.31649C80.1274 3.41409 73.0545 4.09747 71.8196 4.34854C71.3676 4.44035 70.9125 4.52978 70.8082 4.54733C70.7039 4.5647 71.0737 4.64748 71.6299 4.73146C72.1862 4.81526 75.5635 4.92138 79.1352 4.96737C84.4972 5.03618 85.9062 5.00501 87.2185 4.78818C88.9903 4.49537 89.6008 4.12796 89.8928 3.17835C90.1183 2.44472 90.0167 2.24083 89.3125 2.01446C88.05 1.60838 83.1764 0.948505 78.8994 0.604771C77.6826 0.506999 75.7198 0.342116 74.5377 0.238382C71.9959 0.0152443 34.8492 -0.0946208 28.7084 0.102796Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>{" "}
+                - our team will review and provide a detailed quotation via
+                email.
               </p>
             )}
           </div>
@@ -633,7 +893,9 @@ const QuoteBuilder = () => {
         <DrawerContent className="h-[88dvh] sm:h-auto sm:max-h-[86vh] overflow-hidden border border-border/60 sm:mx-auto sm:mb-6 sm:w-full sm:max-w-xl sm:rounded-2xl">
           <div className="h-full overflow-y-auto px-4 sm:px-6 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-xl">Share Your Contact Details</DrawerTitle>
+              <DrawerTitle className="text-xl">
+                Share Your Contact Details
+              </DrawerTitle>
               <DrawerDescription>
                 Fill in your information below and send your quote request.
               </DrawerDescription>
@@ -645,7 +907,11 @@ const QuoteBuilder = () => {
               <p className="text-xs text-muted-foreground mb-4">
                 We'll send your custom quotation to the email provided.
               </p>
-              <QuoteFormSection data={quoteData} onChange={setQuoteData} errors={errors} />
+              <QuoteFormSection
+                data={quoteData}
+                onChange={setQuoteData}
+                errors={errors}
+              />
             </div>
 
             <DrawerFooter className="px-0 pt-5">

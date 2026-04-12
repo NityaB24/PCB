@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
 import { motion } from "framer-motion";
 
 const Hero = () => {
@@ -50,7 +52,7 @@ const Hero = () => {
             className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
           >
             <Link
-              to="/quote"
+              href="/quote"
               className="inline-flex items-center gap-2 rounded-lg bg-primary px-8 py-3.5 text-sm font-bold text-primary-foreground shadow-lg transition-all hover:brightness-110 glow-primary"
             >
               Request a Quote
@@ -59,7 +61,7 @@ const Hero = () => {
               </svg>
             </Link>
             <Link
-              to="/about"
+              href="/about"
               className="inline-flex items-center gap-2 rounded-lg border border-border px-8 py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
             >
               Learn More

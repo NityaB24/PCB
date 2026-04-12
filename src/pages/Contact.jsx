@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
@@ -11,7 +13,7 @@ const Contact = () => {
   const [sent, setSent] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     const errs = {};
     if (!form.name.trim()) errs.name = "Required";

@@ -1,4 +1,6 @@
-import { createContext, useContext, cloneElement } from "react";
+"use client";
+
+import { createContext, useContext, cloneElement, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -14,6 +16,13 @@ export function Drawer({ open, onOpenChange, children }) {
 
 export function DrawerContent({ children, className = "" }) {
   const { open, onOpenChange } = useContext(DrawerContext);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   return createPortal(
     <AnimatePresence>

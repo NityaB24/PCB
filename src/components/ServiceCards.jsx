@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
 import { motion } from "framer-motion";
 
 const services = [
@@ -90,7 +92,7 @@ const ServiceCards = () => {
           className="mt-12 text-center"
         >
           <Link
-            to="/quote"
+            href="/quote"
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-8 py-3 text-sm font-bold text-primary-foreground transition-all hover:brightness-110"
           >
             Start Your Quote

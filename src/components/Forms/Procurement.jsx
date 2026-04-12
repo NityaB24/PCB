@@ -1,3 +1,5 @@
+"use client";
+
 const ProcurementForm = ({ data, onChange }) => {
   const rows = data.components?.length ? data.components : [{ partNumber: "", description: "", manufacturers: "" }];
 
