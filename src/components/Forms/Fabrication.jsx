@@ -25,7 +25,7 @@ const SectionLabel = ({ children, hint }) => (
   </div>
 );
 
-const FabricationForm = ({ data, onChange }) => {
+const FabricationForm = ({ data, onChange, showStencilOption = true }) => {
   const update = (field, value) => {
     onChange({ ...data, [field]: value });
   };
@@ -160,6 +160,33 @@ const FabricationForm = ({ data, onChange }) => {
           ))}
         </div>
       </div>
+
+      {showStencilOption && (
+        <div className="space-y-2">
+          <SectionLabel hint="Need stencil along with fabrication?">Stencil Requirement</SectionLabel>
+          <div className={radioGroupClass}>
+            {[
+              { value: "No Stencil", label: "No Stencil" },
+              { value: "Stencil by us", label: "Stencil by us" },
+            ].map((v) => (
+              <button
+                type="button"
+                key={v.value}
+                className={radioClass(data.stencilRequirement === v.value)}
+                onClick={() => update("stencilRequirement", v.value)}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+          {data.stencilRequirement === "Stencil by us" && (
+            <p className="text-[10px] text-primary mt-1 flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              Stencil will be manufactured from the same Gerber upload
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Mask Color */}
       <div className="space-y-2">

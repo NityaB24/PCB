@@ -113,6 +113,7 @@ const initialFab = {
   thickness: "1.6mm",
   copperThickness: "1 oz",
   pcbFinish: "HASL Finish",
+  stencilRequirement: "No Stencil",
   maskColor: "Green",
 };
 
@@ -353,6 +354,9 @@ const QuoteBuilder = () => {
         fabData.thickness,
         fabData.copperThickness,
         fabData.pcbFinish,
+        selectedService !== "assembly"
+          ? `Stencil: ${fabData.stencilRequirement}`
+          : "",
         `${fabData.maskColor} mask`,
         fabData.gerberFile ? `📎 ${fabData.gerberFile.name}` : "",
       ].filter(Boolean),
@@ -515,8 +519,8 @@ const QuoteBuilder = () => {
                   <p className="text-sm text-muted-foreground mb-5">
                     Choose the service you need.
                   </p>
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    {["fabrication", "assembly", "procurement"].map((key) => {
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {["fabrication", "assembly", "stencil", "procurement"].map((key) => {
                       const info = serviceInfo[key];
                       const isOn = selectedService === key;
                       return (
@@ -640,6 +644,7 @@ const QuoteBuilder = () => {
                             <FabricationForm
                               data={fabData}
                               onChange={setFabData}
+                              showStencilOption={selectedService !== "assembly"}
                             />
                           </motion.div>
                         )}
@@ -664,9 +669,11 @@ const QuoteBuilder = () => {
                                     Stencil
                                   </span>
                                 </span>
-                                <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] sm:text-xs font-medium text-primary whitespace-nowrap">
-                                  Added via Assembly
-                                </span>
+                                {selectedService === "assembly" && (
+                                  <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] sm:text-xs font-medium text-primary whitespace-nowrap">
+                                    Added via Assembly
+                                  </span>
+                                )}
                               </h2>
                               <p className="text-sm text-muted-foreground mt-1">
                                 Upload your Gerber file for stencil production
