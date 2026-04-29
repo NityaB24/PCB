@@ -1,9 +1,42 @@
 "use client";
 
-const ProcurementForm = ({ data, onChange }) => {
+import { useState } from "react";
+
+const ProcurementForm = ({ data, onChange, submitAttempted = false }) => {
+  const [fileError, setFileError] = useState("");
+  const [hasInteracted, setHasInteracted] = useState(false);
   const rows = data.components?.length ? data.components : [{ partNumber: "", description: "", manufacturers: "" }];
+  const maxFileSizeBytes = 5 * 1024 * 1024;
+  const hasManualComponent = rows.some(
+    (row) =>
+      Boolean(row?.partNumber?.trim()) ||
+      Boolean(row?.description?.trim()) ||
+      Boolean(row?.manufacturers?.trim()),
+  );
+  const missingBothInputs = !data.componentFile && !hasManualComponent;
+  const showMissingInputsError = (hasInteracted || submitAttempted) && missingBothInputs;
 
   const updateFile = (file) => {
+    setHasInteracted(true);
+    if (!file) {
+      setFileError("");
+      onChange({
+        ...data,
+        componentFile: null,
+      });
+      return;
+    }
+
+    if (file.size > maxFileSizeBytes) {
+      setFileError("File exceeds 5MB. Please upload a smaller file.");
+      onChange({
+        ...data,
+        componentFile: null,
+      });
+      return;
+    }
+
+    setFileError("");
     onChange({
       ...data,
       componentFile: file || null,
@@ -11,6 +44,7 @@ const ProcurementForm = ({ data, onChange }) => {
   };
 
   const updateRow = (index, field, value) => {
+    setHasInteracted(true);
     const nextRows = rows.map((row, i) => (i === index ? { ...row, [field]: value } : row));
     onChange({
       ...data,
@@ -19,6 +53,7 @@ const ProcurementForm = ({ data, onChange }) => {
   };
 
   const addRow = () => {
+    setHasInteracted(true);
     onChange({
       ...data,
       components: [...rows, { partNumber: "", description: "", manufacturers: "" }],
@@ -26,6 +61,7 @@ const ProcurementForm = ({ data, onChange }) => {
   };
 
   const removeRow = (index) => {
+    setHasInteracted(true);
     const filtered = rows.filter((_, i) => i !== index);
     onChange({
       ...data,
@@ -36,7 +72,7 @@ const ProcurementForm = ({ data, onChange }) => {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <label className="text-sm font-medium text-foreground">Component List</label>
+        <label className="text-sm font-medium text-foreground">Component List *</label>
         <p className="text-[11px] text-muted-foreground">
           Share your component requirements by uploading an Excel file or filling the table below.
         </p>
@@ -44,9 +80,9 @@ const ProcurementForm = ({ data, onChange }) => {
 
       <div className="rounded-lg border border-border bg-secondary/20 p-4 space-y-3">
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-foreground">Upload Excel (optional)</p>
+          <p className="text-sm font-semibold text-foreground">Upload Excel *</p>
           <p className="text-xs text-muted-foreground">
-            Accepted format: .xls, .xlsx, .csv with columns: Part Number, Description (optional), Manufacturer Name(s).
+            Accepted format: .xls, .xlsx, .csv with columns: Part Number, Description, Manufacturer Name(s).
           </p>
         </div>
         <input
@@ -55,6 +91,12 @@ const ProcurementForm = ({ data, onChange }) => {
           onChange={(e) => updateFile(e.target.files?.[0] || null)}
           className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary"
         />
+        {fileError && <p className="text-xs text-destructive">{fileError}</p>}
+        {showMissingInputsError && (
+          <p className="text-xs text-destructive">
+            Upload a component file or add at least one component manually.
+          </p>
+        )}
         {data.componentFile && (
           <p className="text-xs text-foreground/80">
             Selected file: <span className="font-medium">{data.componentFile.name}</span>
@@ -64,7 +106,7 @@ const ProcurementForm = ({ data, onChange }) => {
 
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-foreground">Or add components manually</p>
+          <p className="text-sm font-semibold text-foreground">Or add components manually *</p>
           <button
             type="button"
             onClick={addRow}
@@ -79,7 +121,7 @@ const ProcurementForm = ({ data, onChange }) => {
             <thead className="bg-secondary/40">
               <tr>
                 <th className="px-3 py-2 text-left font-medium text-foreground">Part Number *</th>
-                <th className="px-3 py-2 text-left font-medium text-foreground">Description (Optional)</th>
+                <th className="px-3 py-2 text-left font-medium text-foreground">Description *</th>
                 <th className="px-3 py-2 text-left font-medium text-foreground">Manufacturer Name(s) *</th>
                 <th className="px-3 py-2 text-left font-medium text-foreground w-[90px]">Action</th>
               </tr>
@@ -158,7 +200,7 @@ const ProcurementForm = ({ data, onChange }) => {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-foreground">Description (Optional)</label>
+                    <label className="text-xs font-medium text-foreground">Description *</label>
                     <input
                       value={row.description}
                       onChange={(e) => updateRow(index, "description", e.target.value)}

@@ -2,17 +2,38 @@
 
 import { useState, useCallback } from "react";
 
-const FileUpload = ({ label, accept, onFileSelect, file }) => {
+const FileUpload = ({ label, accept, onFileSelect, file, maxSizeBytes = 5 * 1024 * 1024 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [fileError, setFileError] = useState("");
+
+  const validateAndSelectFile = useCallback(
+    (candidate) => {
+      if (!candidate) {
+        setFileError("");
+        onFileSelect(null);
+        return;
+      }
+
+      if (candidate.size > maxSizeBytes) {
+        setFileError("File exceeds 5MB. Please upload a smaller file.");
+        onFileSelect(null);
+        return;
+      }
+
+      setFileError("");
+      onFileSelect(candidate);
+    },
+    [maxSizeBytes, onFileSelect]
+  );
 
   const handleDrop = useCallback(
     (e) => {
       e.preventDefault();
       setIsDragging(false);
       const dropped = e.dataTransfer.files[0];
-      if (dropped) onFileSelect(dropped);
+      if (dropped) validateAndSelectFile(dropped);
     },
-    [onFileSelect]
+    [validateAndSelectFile]
   );
 
   const handleDragOver = useCallback((e) => {
@@ -43,7 +64,7 @@ const FileUpload = ({ label, accept, onFileSelect, file }) => {
           type="file"
           accept={accept}
           className="hidden"
-          onChange={(e) => onFileSelect(e.target.files?.[0] || null)}
+          onChange={(e) => validateAndSelectFile(e.target.files?.[0] || null)}
         />
         {file ? (
           <div className="flex items-center gap-3">
@@ -61,7 +82,7 @@ const FileUpload = ({ label, accept, onFileSelect, file }) => {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onFileSelect(null);
+                  validateAndSelectFile(null);
               }}
               className="ml-2 rounded-md p-1 text-muted-foreground hover:text-destructive transition-colors"
             >
@@ -82,6 +103,7 @@ const FileUpload = ({ label, accept, onFileSelect, file }) => {
           </>
         )}
       </div>
+      {fileError && <p className="text-xs text-destructive">{fileError}</p>}
     </div>
   );
 };

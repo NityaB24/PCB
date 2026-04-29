@@ -54,58 +54,71 @@ const AssemblyForm = ({ data, onChange }) => {
       {/* BOM upload */}
       <div className="rounded-lg border border-dashed border-border bg-secondary/20 p-4">
         <FileUpload
-          label="BOM File"
+          label="BOM File *"
           accept=".csv,.xlsx,.xls,.pdf,.zip"
           file={data.bomFile}
           onFileSelect={(f) => update("bomFile", f)}
+          required
         />
         <p className={`${hintClass} mt-2`}>Upload your Bill of Materials (CSV, Excel, or PDF)</p>
       </div>
 
-      <div className="space-y-2">
-        <SectionLabel hint="Total number of assembled units needed">Units</SectionLabel>
-        <input
-          type="number"
-          min="1"
-          className={inputClass}
-          placeholder="Number of units"
-          value={data.units}
-          onChange={(e) => update("units", e.target.value)}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <SectionLabel hint="RoHS compliant or standard">Solder Type</SectionLabel>
-        <div className={radioGroupClass}>
-          {["ROHS", "Non ROHS"].map((v) => (
-            <button type="button" key={v} className={radioClass(data.solderType === v)} onClick={() => update("solderType", v)}>
-              {v}
-            </button>
-          ))}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:items-stretch">
+        <div className="col-span-2 space-y-2 rounded-lg border border-border bg-secondary/20 p-4 md:col-span-1">
+          <SectionLabel hint="Total number of assembled units needed">Units *</SectionLabel>
+          <input
+            type="number"
+            min="1"
+            className={inputClass}
+            placeholder="Number of units"
+            value={data.units}
+            onChange={(e) => update("units", e.target.value)}
+          />
         </div>
-      </div>
 
-      {/* Components Source */}
-      <div className="space-y-2">
-        <SectionLabel hint="Who provides the electronic components?">Components</SectionLabel>
-        <div className={radioGroupClass}>
-          {["Provided by user", "Procure from us"].map((v) => (
-            <button type="button" key={v} className={radioClass(data.componentsSource === v)} onClick={() => update("componentsSource", v)}>
-              {v}
-            </button>
-          ))}
+        <div className="col-span-1 space-y-2 rounded-lg border border-border bg-secondary/20 p-4">
+          <SectionLabel hint="RoHS compliant or standard">Solder Type *</SectionLabel>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
+            {["ROHS", "Non ROHS"].map((v) => (
+              <button
+                type="button"
+                key={v}
+                className={`${radioClass(data.solderType === v)} w-full text-center justify-center`}
+                onClick={() => update("solderType", v)}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
         </div>
-        {data.componentsSource === "Procure from us" && (
-          <p className="text-[10px] text-primary mt-1 flex items-center gap-1">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-            Procurement tab will be added for configuration
-          </p>
-        )}
+
+        {/* Components Source */}
+        <div className="col-span-1 space-y-2 rounded-lg border border-border bg-secondary/20 p-4">
+          <SectionLabel hint="Who provides the electronic components?">Components *</SectionLabel>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
+            {["Provided by user", "Procure from us"].map((v) => (
+              <button
+                type="button"
+                key={v}
+                className={`${radioClass(data.componentsSource === v)} w-full text-center justify-center`}
+                onClick={() => update("componentsSource", v)}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+          {data.componentsSource === "Procure from us" && (
+            <p className="text-[10px] text-primary mt-1 flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              Procurement tab will be added for configuration
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Fabrication & Stencil Option - merged */}
       <div className="space-y-2">
-        <SectionLabel hint="Choose how stencil and PCB board are sourced">Fabrication & Stencil</SectionLabel>
+        <SectionLabel hint="Choose how stencil and PCB board are sourced">Fabrication & Stencil *</SectionLabel>
         <div className="grid gap-2 sm:grid-cols-2">
           {pcbStencilOptions.map((opt) => (
             <button

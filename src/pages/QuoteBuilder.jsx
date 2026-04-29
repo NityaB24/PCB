@@ -146,6 +146,8 @@ const steps = [
   { key: "review", label: "Review & Submit" },
 ];
 
+const isFilled = (value) => typeof value === "string" && value.trim() !== "";
+
 const QuoteBuilder = () => {
   const [step, setStep] = useState(0);
   const [selectedService, setSelectedService] = useState(null);
@@ -158,6 +160,9 @@ const QuoteBuilder = () => {
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const enabledTabs = useMemo(() => {
     if (!selectedService) return [];
@@ -190,6 +195,22 @@ const QuoteBuilder = () => {
     }
   }, [enabledTabs, activeConfigTab]);
 
+  // Auto-set stencil requirement when "Both Stencil and Fabrication from us" is selected
+  useEffect(() => {
+    if (
+      selectedService === "assembly" &&
+      assemblyData.pcbStencilOption === "Both Stencil and Fabrication from us"
+    ) {
+      setFabData((prev) => ({
+        ...prev,
+        stencilRequirement: "Stencil by us",
+      }));
+    }
+  }, [
+    selectedService,
+    assemblyData.pcbStencilOption,
+  ]);
+
   const selectService = (key) => {
     setSelectedService((prev) => (prev === key ? null : key));
     setErrors({});
@@ -201,44 +222,222 @@ const QuoteBuilder = () => {
     if (!quoteData.email.trim()) errs.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(quoteData.email))
       errs.email = "Invalid email";
-    if (!quoteData.phone.trim()) errs.phone = "Phone is required";
+    const digitsOnlyPhone = quoteData.phone.replace(/\D/g, "");
+    if (!digitsOnlyPhone) errs.phone = "Phone is required";
+    else if (!/^\d{10}$/.test(digitsOnlyPhone)) {
+      errs.phone = "Phone number must be exactly 10 digits";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (!validate()) return;
-    const payload = { contact: quoteData, services: {} };
+  const validateConfiguration = (tabToValidate) => {
+    const tabsToCheck = tabToValidate ? [tabToValidate] : enabledTabs;
+
+    for (const tab of tabsToCheck) {
+      if (tab === "fabrication") {
+        if (!fabData.gerberFile) {
+          return "Fabrication Gerber file is required.";
+        }
+
+        const fabricationFields = [
+          { key: "layers", label: "Fabrication layers" },
+          { key: "quantity", label: "Fabrication quantity" },
+          { key: "width", label: "Fabrication width" },
+          { key: "height", label: "Fabrication height" },
+          { key: "discreteDesign", label: "Fabrication discrete design" },
+          { key: "boardType", label: "Fabrication board type" },
+          { key: "thickness", label: "Fabrication thickness" },
+          { key: "copperThickness", label: "Fabrication copper thickness" },
+          { key: "pcbFinish", label: "Fabrication PCB finish" },
+          { key: "stencilRequirement", label: "Fabrication stencil requirement" },
+          { key: "maskColor", label: "Fabrication mask color" },
+        ];
+
+        for (const field of fabricationFields) {
+          if (!isFilled(fabData[field.key])) {
+            return `${field.label} is required.`;
+          }
+        }
+      }
+
+      if (tab === "assembly") {
+        if (!assemblyData.bomFile) {
+          return "Assembly BOM file is required.";
+        }
+
+        const assemblyFields = [
+          { key: "units", label: "Assembly units" },
+          { key: "pcbStencilOption", label: "Assembly stencil/fabrication option" },
+          { key: "solderType", label: "Assembly solder type" },
+          { key: "componentsSource", label: "Assembly component source" },
+        ];
+
+        for (const field of assemblyFields) {
+          if (!isFilled(assemblyData[field.key])) {
+            return `${field.label} is required.`;
+          }
+        }
+      }
+
+      if (tab === "stencil") {
+        if (!stencilData.gerberFile) {
+          return "Stencil Gerber file is required.";
+        }
+      }
+
+      if (tab === "procurement") {
+        if (!isFilled(procurementData.procurementSource || "")) {
+          return "Procurement source is required.";
+        }
+
+        const rows = Array.isArray(procurementData.components)
+          ? procurementData.components
+          : [];
+        const hasManualComponents = rows.some(
+          (row) =>
+            isFilled(row?.partNumber || "") ||
+            isFilled(row?.description || "") ||
+            isFilled(row?.manufacturers || ""),
+        );
+
+        if (!procurementData.componentFile && !hasManualComponents) {
+          return "Upload a component file or add at least one component manually.";
+        }
+
+        if (!procurementData.componentFile) {
+          for (let i = 0; i < rows.length; i += 1) {
+            const row = rows[i] || {};
+            if (!isFilled(row.partNumber || "")) {
+              return `Procurement row ${i + 1}: part number is required.`;
+            }
+            if (!isFilled(row.description || "")) {
+              return `Procurement row ${i + 1}: description is required.`;
+            }
+            if (!isFilled(row.manufacturers || "")) {
+              return `Procurement row ${i + 1}: manufacturer name(s) are required.`;
+            }
+          }
+        }
+      }
+    }
+
+    return null;
+  };
+
+  const buildSubmissionPayload = () => {
+    const payload = {
+      selectedService,
+      enabledTabs,
+      contact: quoteData,
+      services: {},
+    };
+
     if (enabledTabs.includes("fabrication")) {
       payload.services.fabrication = {
         ...fabData,
         gerberFile: fabData.gerberFile?.name || null,
       };
     }
+
     if (enabledTabs.includes("stencil")) {
       payload.services.stencil = {
         gerberFile: stencilData.gerberFile?.name || null,
       };
     }
+
     if (enabledTabs.includes("assembly")) {
       payload.services.assembly = {
         ...assemblyData,
         bomFile: assemblyData.bomFile?.name || null,
       };
     }
+
     if (
       enabledTabs.includes("procurement") ||
       selectedService === "procurement"
     ) {
-      payload.services.procurement = procurementData;
+      payload.services.procurement = {
+        ...procurementData,
+        componentFile: procurementData.componentFile?.name || null,
+      };
     }
-    console.log("📋 Quote Request Submitted:", payload);
-    setDrawerOpen(false);
-    setSubmitted(true);
+
+    return payload;
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) return;
+
+    const configurationError = validateConfiguration();
+    if (configurationError) {
+      setSubmitAttempted(true);
+      setSubmitError(configurationError);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+    setSubmitAttempted(true);
+
+    try {
+      const payload = buildSubmissionPayload();
+      const formData = new FormData();
+
+      formData.append("payload", JSON.stringify(payload));
+
+      if (fabData.gerberFile) {
+        formData.append("fabricationGerberFile", fabData.gerberFile);
+      }
+      if (stencilData.gerberFile) {
+        formData.append("stencilGerberFile", stencilData.gerberFile);
+      }
+      if (assemblyData.bomFile) {
+        formData.append("assemblyBomFile", assemblyData.bomFile);
+      }
+      if (procurementData.componentFile) {
+        formData.append(
+          "procurementComponentFile",
+          procurementData.componentFile,
+        );
+      }
+
+      const response = await fetch("/api/quotes", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        let message = "Unable to submit quote request. Please try again.";
+
+        try {
+          const body = await response.json();
+          if (typeof body?.error === "string" && body.error.trim()) {
+            message = body.error;
+          }
+        } catch {
+          // Keep generic message if response is not JSON.
+        }
+
+        throw new Error(message);
+      }
+
+      setDrawerOpen(false);
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Unable to submit quote request. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const openContactDrawer = () => {
     setErrors({});
+    setSubmitError("");
     setDrawerOpen(true);
   };
 
@@ -264,13 +463,26 @@ const QuoteBuilder = () => {
     step === 1 && activeTabIndex === enabledTabs.length - 1;
 
   const handlePrimaryAction = () => {
-    if (
-      step === 1 &&
-      enabledTabs.length > 0 &&
-      activeTabIndex < enabledTabs.length - 1
-    ) {
-      setActiveConfigTab(enabledTabs[activeTabIndex + 1]);
-      return;
+    if (step === 1 && enabledTabs.length > 0) {
+      if (activeTabIndex < enabledTabs.length - 1) {
+        const configurationError = validateConfiguration(activeConfigTab);
+        if (configurationError) {
+          setErrors({ services: configurationError });
+          return;
+        }
+
+        setErrors({});
+        setActiveConfigTab(enabledTabs[activeTabIndex + 1]);
+        return;
+      }
+
+      const configurationError = validateConfiguration();
+      if (configurationError) {
+        setErrors({ services: configurationError });
+        return;
+      }
+
+      setErrors({});
     }
 
     if (step === 2) {
@@ -327,6 +539,8 @@ const QuoteBuilder = () => {
                 setProcurementData(initialProcurement);
                 setQuoteData(initialQuote);
                 setErrors({});
+                setSubmitError("");
+                setSubmitAttempted(false);
               }}
               className="rounded-md bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110"
             >
@@ -388,9 +602,32 @@ const QuoteBuilder = () => {
     enabledTabs.includes("procurement") ||
     selectedService === "procurement"
   ) {
+    const procurementRows = Array.isArray(procurementData.components)
+      ? procurementData.components
+      : [];
+    const manualProcurementDetails = procurementRows
+      .map((row, index) => {
+        const partNumber = row?.partNumber?.trim();
+        const description = row?.description?.trim();
+        const manufacturers = row?.manufacturers?.trim();
+
+        if (!partNumber && !description && !manufacturers) {
+          return null;
+        }
+
+        return `Row ${index + 1}: ${[partNumber, description, manufacturers]
+          .filter(Boolean)
+          .join(" | ")}`;
+      })
+      .filter(Boolean);
+
     summaryItems.push({
       label: "Procurement",
-      details: [`Source: ${procurementData.procurementSource}`],
+      details: [
+        `Source: ${procurementData.procurementSource}`,
+        procurementData.componentFile ? `📎 ${procurementData.componentFile.name}` : "",
+        ...manualProcurementDetails,
+      ].filter(Boolean),
     });
   }
 
@@ -439,13 +676,7 @@ const QuoteBuilder = () => {
                         }`}
                       >
                         <span
-                          className={`flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-xs font-bold ${
-                            isActive
-                              ? "bg-primary-foreground/20"
-                              : isComplete
-                                ? "bg-primary/20"
-                                : "bg-background/50"
-                          }`}
+                          className={`flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-xs font-bold`}
                         >
                           {isComplete ? (
                             <svg
@@ -482,28 +713,6 @@ const QuoteBuilder = () => {
                 })}
               </div>
             </div>
-
-            {errors.services && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 8v4M12 16h.01" />
-                </svg>
-                {errors.services}
-              </motion.div>
-            )}
 
             {/* Step Content */}
             <AnimatePresence mode="wait">
@@ -645,6 +854,11 @@ const QuoteBuilder = () => {
                               data={fabData}
                               onChange={setFabData}
                               showStencilOption={selectedService !== "assembly"}
+                              forceStencil={
+                                selectedService === "assembly" &&
+                                assemblyData.pcbStencilOption === "Both Stencil and Fabrication from us"
+                              }
+                              stencilForcedReason={null}
                             />
                           </motion.div>
                         )}
@@ -747,6 +961,7 @@ const QuoteBuilder = () => {
                             <ProcurementForm
                               data={procurementData}
                               onChange={setProcurementData}
+                              submitAttempted={submitAttempted}
                             />
                           </motion.div>
                         )}
@@ -815,6 +1030,28 @@ const QuoteBuilder = () => {
               )}
             </AnimatePresence>
 
+            {errors.services && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 8v4M12 16h.01" />
+                </svg>
+                {errors.services}
+              </motion.div>
+            )}
+
             {/* Navigation Buttons */}
             <div className="mt-8 flex items-center justify-between gap-4">
               {step > 0 ? (
@@ -866,7 +1103,6 @@ const QuoteBuilder = () => {
               </button>
             </div>
 
-            {step === 0 && (
               <p className="mt-4 text-center text-xs text-muted-foreground">
                 <span className="relative inline-block pb-2">
                   <span className="relative z-10">No instant pricing</span>
@@ -889,7 +1125,6 @@ const QuoteBuilder = () => {
                 - our team will review and provide a detailed quotation via
                 email.
               </p>
-            )}
           </div>
         </div>
       </main>
@@ -897,7 +1132,7 @@ const QuoteBuilder = () => {
 
       {/* Quote Review Drawer */}
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <DrawerContent className="h-[88dvh] sm:h-auto sm:max-h-[86vh] overflow-hidden border border-border/60 sm:mx-auto sm:mb-6 sm:w-full sm:max-w-xl sm:rounded-2xl">
+        <DrawerContent className="h-[88dvh] sm:h-auto overflow-hidden border border-border/60 sm:mx-auto sm:mb-6 sm:w-full sm:max-w-xl sm:rounded-2xl">
           <div className="h-full overflow-y-auto px-4 sm:px-6 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
             <DrawerHeader className="px-0">
               <DrawerTitle className="text-xl">
@@ -909,25 +1144,25 @@ const QuoteBuilder = () => {
             </DrawerHeader>
 
             {/* Contact form */}
-            <div>
-              <h3 className="text-sm font-semibold mb-1">Contact Details</h3>
-              <p className="text-xs text-muted-foreground mb-4">
-                We'll send your custom quotation to the email provided.
-              </p>
-              <QuoteFormSection
-                data={quoteData}
-                onChange={setQuoteData}
-                errors={errors}
-              />
-            </div>
+            <QuoteFormSection
+              data={quoteData}
+              onChange={setQuoteData}
+              errors={errors}
+            />
 
             <DrawerFooter className="px-0 pt-5">
+              {submitError && (
+                <p className="mb-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {submitError}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={handleSubmit}
-                className="w-full rounded-lg bg-primary py-3 text-sm font-bold text-primary-foreground transition-all hover:brightness-110"
+                disabled={isSubmitting}
+                className="w-full rounded-lg bg-primary py-3 text-sm font-bold text-primary-foreground transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Submit Quote Request
+                {isSubmitting ? "Submitting..." : "Submit Quote Request"}
               </button>
               <DrawerClose asChild>
                 <button

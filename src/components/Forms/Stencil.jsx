@@ -8,13 +8,14 @@ const StencilForm = ({ data, onChange }) => {
     <div className="space-y-4">
       <div className="rounded-lg border border-dashed border-border bg-secondary/20 p-4">
         <FileUpload
-          label="Gerber File (for Stencil)"
+          label="Gerber File (for Stencil) *"
           accept=".zip,.gbr,.ger,.gtl,.gbl,.gbs,.gts"
           file={data.gerberFile}
           onFileSelect={(f) => onChange({ ...data, gerberFile: f })}
+          required
         />
         <p className={`${hintClass} mt-2`}>
-          Upload your Gerber files for stencil production (.zip or individual Gerber files)
+          Upload your Gerber files for stencil production (.zip)
         </p>
       </div>
     </div>
