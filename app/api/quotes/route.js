@@ -8,6 +8,10 @@ const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 const ADMIN_API_KEY = process.env.QUOTE_ADMIN_API_KEY;
 
 const isFilled = (value) => typeof value === "string" && value.trim() !== "";
+const isPositiveQuantity = (value) => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric > 0;
+};
 
 const requireFilledField = (obj, key, label) => {
   if (!isFilled(obj?.[key])) {
@@ -97,7 +101,8 @@ const validateServicesAndFiles = (payload, attachments) => {
         (row) =>
           isFilled(row?.partNumber) ||
           isFilled(row?.description) ||
-          isFilled(row?.manufacturers),
+          isFilled(row?.manufacturers) ||
+          isFilled(String(row?.quantity ?? "")),
       );
 
       if (!procurement.componentFile && !hasManualComponents) {
@@ -115,6 +120,9 @@ const validateServicesAndFiles = (payload, attachments) => {
           }
           if (!isFilled(row.manufacturers)) {
             throw new Error(`Procurement row ${i + 1}: manufacturer name(s) are required.`);
+          }
+          if (!isPositiveQuantity(row.quantity)) {
+            throw new Error(`Procurement row ${i + 1}: quantity must be greater than 0.`);
           }
         }
       }

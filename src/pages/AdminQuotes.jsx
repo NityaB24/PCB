@@ -112,8 +112,8 @@ const formatServiceLabel = (value) => {
 const formatProcurementComponent = (row) => {
   if (!row || typeof row !== "object") return "-";
 
-  const parts = [row.partNumber, row.description, row.manufacturers]
-    .map((value) => (typeof value === "string" ? value.trim() : ""))
+  const parts = [row.partNumber, row.description, row.manufacturers, row.quantity]
+    .map((value) => (typeof value === "string" ? value.trim() : String(value ?? "").trim()))
     .filter(Boolean);
 
   if (parts.length === 0) {
@@ -818,6 +818,9 @@ const AdminQuotes = () => {
                                                   <th className="border border-border/50 bg-secondary/30 px-2 py-1.5 text-left font-semibold">
                                                     Manufacturer Name
                                                   </th>
+                                                  <th className="border border-border/50 bg-secondary/30 px-2 py-1.5 text-left font-semibold">
+                                                    Quantity
+                                                  </th>
                                                 </tr>
                                               </thead>
                                               <tbody>
@@ -831,6 +834,9 @@ const AdminQuotes = () => {
                                                     </td>
                                                     <td className="border border-border/30 px-2 py-1.5 break-words">
                                                       {row?.manufacturers?.trim() || "-"}
+                                                    </td>
+                                                    <td className="border border-border/30 px-2 py-1.5 break-words">
+                                                      {row?.quantity ?? "-"}
                                                     </td>
                                                   </tr>
                                                 ))}

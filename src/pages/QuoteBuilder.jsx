@@ -147,6 +147,10 @@ const steps = [
 ];
 
 const isFilled = (value) => typeof value === "string" && value.trim() !== "";
+const isPositiveQuantity = (value) => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric > 0;
+};
 
 const QuoteBuilder = () => {
   const [step, setStep] = useState(0);
@@ -298,7 +302,8 @@ const QuoteBuilder = () => {
           (row) =>
             isFilled(row?.partNumber || "") ||
             isFilled(row?.description || "") ||
-            isFilled(row?.manufacturers || ""),
+            isFilled(row?.manufacturers || "") ||
+            isFilled(String(row?.quantity ?? "")),
         );
 
         if (!procurementData.componentFile && !hasManualComponents) {
@@ -316,6 +321,9 @@ const QuoteBuilder = () => {
             }
             if (!isFilled(row.manufacturers || "")) {
               return `Procurement row ${i + 1}: manufacturer name(s) are required.`;
+            }
+            if (!isPositiveQuantity(row.quantity)) {
+              return `Procurement row ${i + 1}: quantity must be greater than 0.`;
             }
           }
         }
@@ -610,12 +618,13 @@ const QuoteBuilder = () => {
         const partNumber = row?.partNumber?.trim();
         const description = row?.description?.trim();
         const manufacturers = row?.manufacturers?.trim();
+        const quantity = row?.quantity;
 
-        if (!partNumber && !description && !manufacturers) {
+        if (!partNumber && !description && !manufacturers && !quantity) {
           return null;
         }
 
-        return `Row ${index + 1}: ${[partNumber, description, manufacturers]
+        return `Row ${index + 1}: ${[partNumber, description, manufacturers, quantity]
           .filter(Boolean)
           .join(" | ")}`;
       })

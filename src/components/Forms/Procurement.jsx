@@ -5,13 +5,16 @@ import { useState } from "react";
 const ProcurementForm = ({ data, onChange, submitAttempted = false }) => {
   const [fileError, setFileError] = useState("");
   const [hasInteracted, setHasInteracted] = useState(false);
-  const rows = data.components?.length ? data.components : [{ partNumber: "", description: "", manufacturers: "" }];
+  const rows = data.components?.length
+    ? data.components
+    : [{ partNumber: "", description: "", manufacturers: "", quantity: "" }];
   const maxFileSizeBytes = 5 * 1024 * 1024;
   const hasManualComponent = rows.some(
     (row) =>
       Boolean(row?.partNumber?.trim()) ||
       Boolean(row?.description?.trim()) ||
-      Boolean(row?.manufacturers?.trim()),
+      Boolean(row?.manufacturers?.trim()) ||
+      Boolean(String(row?.quantity ?? "").trim()),
   );
   const missingBothInputs = !data.componentFile && !hasManualComponent;
   const showMissingInputsError = (hasInteracted || submitAttempted) && missingBothInputs;
@@ -56,7 +59,7 @@ const ProcurementForm = ({ data, onChange, submitAttempted = false }) => {
     setHasInteracted(true);
     onChange({
       ...data,
-      components: [...rows, { partNumber: "", description: "", manufacturers: "" }],
+      components: [...rows, { partNumber: "", description: "", manufacturers: "", quantity: "" }],
     });
   };
 
@@ -65,7 +68,9 @@ const ProcurementForm = ({ data, onChange, submitAttempted = false }) => {
     const filtered = rows.filter((_, i) => i !== index);
     onChange({
       ...data,
-      components: filtered.length ? filtered : [{ partNumber: "", description: "", manufacturers: "" }],
+      components: filtered.length
+        ? filtered
+        : [{ partNumber: "", description: "", manufacturers: "", quantity: "" }],
     });
   };
 
@@ -82,7 +87,7 @@ const ProcurementForm = ({ data, onChange, submitAttempted = false }) => {
         <div className="space-y-1">
           <p className="text-sm font-semibold text-foreground">Upload Excel *</p>
           <p className="text-xs text-muted-foreground">
-            Accepted format: .xls, .xlsx, .csv with columns: Part Number, Description, Manufacturer Name(s).
+            Accepted format: .xls, .xlsx, .csv with columns: Part Number, Description, Manufacturer Name(s), Quantity.
           </p>
         </div>
         <input
@@ -123,6 +128,7 @@ const ProcurementForm = ({ data, onChange, submitAttempted = false }) => {
                 <th className="px-3 py-2 text-left font-medium text-foreground">Part Number *</th>
                 <th className="px-3 py-2 text-left font-medium text-foreground">Description *</th>
                 <th className="px-3 py-2 text-left font-medium text-foreground">Manufacturer Name(s) *</th>
+                <th className="px-3 py-2 text-left font-medium text-foreground">Quantity *</th>
                 <th className="px-3 py-2 text-left font-medium text-foreground w-[90px]">Action</th>
               </tr>
             </thead>
@@ -150,6 +156,17 @@ const ProcurementForm = ({ data, onChange, submitAttempted = false }) => {
                       value={row.manufacturers}
                       onChange={(e) => updateRow(index, "manufacturers", e.target.value)}
                       placeholder="e.g. ST, NXP"
+                      className="w-full rounded-md border border-input bg-background px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </td>
+                  <td className="p-2">
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={row.quantity ?? ""}
+                      onChange={(e) => updateRow(index, "quantity", e.target.value)}
+                      placeholder="e.g. 50"
                       className="w-full rounded-md border border-input bg-background px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </td>
@@ -215,6 +232,19 @@ const ProcurementForm = ({ data, onChange, submitAttempted = false }) => {
                       value={row.manufacturers}
                       onChange={(e) => updateRow(index, "manufacturers", e.target.value)}
                       placeholder="e.g. ST, NXP"
+                      className="w-full rounded-md border border-input bg-background px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-foreground">Quantity *</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={row.quantity ?? ""}
+                      onChange={(e) => updateRow(index, "quantity", e.target.value)}
+                      placeholder="e.g. 50"
                       className="w-full rounded-md border border-input bg-background px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
