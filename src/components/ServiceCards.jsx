@@ -53,7 +53,7 @@ const ServiceCards = () => {
             Our <span className="text-primary">Services</span>
           </h2>
           <p className="text-muted-foreground max-w-md mx-auto">
-            End-to-end PCB solutions — choose one or combine all three for a complete service.
+            End-to-end PCB solutions - choose one or combine all three for a complete service.
           </p>
         </motion.div>
 

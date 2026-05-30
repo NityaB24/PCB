@@ -38,7 +38,7 @@ const About = () => {
                 Building the <span className="text-primary">Foundation</span> of Electronics
               </h1>
               <p className="text-muted-foreground leading-relaxed mb-6">
-                CircuitForge is a professional PCB manufacturing service provider specializing in high-quality circuit board fabrication, surface mount and through-hole assembly, and component procurement. We serve engineers, startups, and enterprises who demand reliability and precision.
+                GeetaDeep is a professional PCB manufacturing service provider specializing in high-quality circuit board fabrication, surface mount and through-hole assembly, and component procurement. We serve engineers, startups, and enterprises who demand reliability and precision.
               </p>
               <p className="text-muted-foreground leading-relaxed">
                 With years of experience in the electronics manufacturing industry, our team understands the critical role that PCB quality plays in product success. We combine modern manufacturing equipment with rigorous process control to deliver boards that meet the highest standards.

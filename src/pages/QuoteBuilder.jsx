@@ -509,7 +509,7 @@ const QuoteBuilder = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center max-w-md px-4"
+            className="text-center max-w-md p-4"
           >
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
               <svg
@@ -531,7 +531,7 @@ const QuoteBuilder = () => {
             <p className="text-muted-foreground mb-6">
               Thank you, {quoteData.name}. We'll review your requirements and
               get back to you at{" "}
-              <span className="text-primary font-mono text-sm">
+              <span className="text-primary font-semibold text-sm">
                 {quoteData.email}
               </span>{" "}
               with a detailed quotation.
@@ -1176,6 +1176,7 @@ const QuoteBuilder = () => {
               <DrawerClose asChild>
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   className="w-full rounded-lg border border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary"
                 >
                   Go Back & Edit

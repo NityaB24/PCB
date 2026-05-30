@@ -222,6 +222,7 @@ const StatusActionMenu = ({ quoteId, status, disabled, onChange }) => {
 const AdminQuotes = () => {
   const [adminKeyInput, setAdminKeyInput] = useState("");
   const [adminKey, setAdminKey] = useState("");
+  const previousThemeRef = useRef(null);
 
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("all");
@@ -322,6 +323,37 @@ const AdminQuotes = () => {
       setAdminKey(saved);
       setAdminKeyInput(saved);
     }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const root = document.documentElement;
+    const storedTheme = window.localStorage.getItem("theme");
+    const currentTheme = storedTheme || (root.classList.contains("dark") ? "dark" : "light");
+
+    previousThemeRef.current = currentTheme;
+    root.classList.remove("dark");
+    root.classList.add("light");
+    window.localStorage.setItem("theme", "light");
+
+    const observer = new MutationObserver(() => {
+      if (root.classList.contains("dark")) {
+        root.classList.remove("dark");
+        root.classList.add("light");
+        window.localStorage.setItem("theme", "light");
+      }
+    });
+
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+
+    return () => {
+      observer.disconnect();
+      const previousTheme = previousThemeRef.current || "light";
+      root.classList.remove("light", "dark");
+      root.classList.add(previousTheme);
+      window.localStorage.setItem("theme", previousTheme);
+    };
   }, []);
 
   useEffect(() => {
@@ -466,7 +498,7 @@ const AdminQuotes = () => {
                   >
                     {STATUS_OPTIONS.map((value) => (
                       <option key={value} value={value}>
-                        {value === "all" ? "All" : value.replace("_", " ")}
+                        {value === "all" ? "All" : getStatusLabel(value)}
                       </option>
                     ))}
                   </select>

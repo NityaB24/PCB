@@ -2,8 +2,58 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+
+const STAT_DEFS = [
+  {
+    label: "Boards Delivered",
+    target: 547,
+    format: (value) => `${Math.round(value)}`,
+  },
+  {
+    label: "Quick Turn",
+    target: 48,
+    format: (value) => `${Math.round(value)}hr`,
+  },
+  {
+    label: "Quality Rate",
+    target: 99.8,
+    format: (value) => `${value.toFixed(1)}%`,
+  },
+];
 
 const Hero = () => {
+  const [statValues, setStatValues] = useState(STAT_DEFS.map(() => 0));
+
+  useEffect(() => {
+    let frameId;
+    let timeoutId;
+    const duration = 1200;
+    const delayMs = 800;
+
+    const startAnimation = () => {
+      const startTime = performance.now();
+
+      const tick = (now) => {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setStatValues(STAT_DEFS.map((stat) => stat.target * eased));
+
+        if (progress < 1) {
+          frameId = requestAnimationFrame(tick);
+        }
+      };
+
+      frameId = requestAnimationFrame(tick);
+    };
+
+    timeoutId = setTimeout(startAnimation, delayMs);
+    return () => {
+      clearTimeout(timeoutId);
+      cancelAnimationFrame(frameId);
+    };
+  }, []);
+
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden pcb-grid">
       {/* Gradient overlays */}
@@ -28,21 +78,21 @@ const Hero = () => {
             className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-glow" />
-            <span className="text-xs font-medium tracking-wider text-primary uppercase font-mono">
+            <span className="text-xs tracking-wider text-primary uppercase">
               Precision PCB Manufacturing
             </span>
           </motion.div>
 
-          <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-            From <span className="text-primary glow-text">Design</span> to{" "}
-            <span className="text-primary glow-text">Delivery</span>
+          <h1 className="mb-6 text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+            From  <span className="text-primary glow-text">Design</span> to
+            <span className="text-primary glow-text"> Delivery</span>
             <br />
             <span className="text-muted-foreground font-light">Your PCB Partner</span>
           </h1>
 
           <p className="mb-10 text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto">
             Expert PCB fabrication, assembly, and component procurement.
-            Get a custom quotation tailored to your exact specifications — no hidden costs.
+            Get a custom quotation tailored to your exact specifications - no hidden costs.
           </p>
 
           <motion.div
@@ -75,13 +125,11 @@ const Hero = () => {
             transition={{ delay: 0.8 }}
             className="mt-16 grid grid-cols-3 gap-8 border-t border-border/50 pt-8"
           >
-            {[
-              { value: "10K+", label: "Boards Delivered" },
-              { value: "48hr", label: "Quick Turn" },
-              { value: "99.8%", label: "Quality Rate" },
-            ].map((stat) => (
+            {STAT_DEFS.map((stat, index) => (
               <div key={stat.label}>
-                <div className="text-2xl font-bold text-primary font-mono">{stat.value}</div>
+                <div className="text-2xl font-bold text-primary font-mono">
+                  {stat.format(statValues[index] ?? 0)}
+                </div>
                 <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
               </div>
             ))}
