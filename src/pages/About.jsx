@@ -6,21 +6,13 @@ import Footer from "../components/Footer.jsx";
 
 const values = [
   {
-    title: "Precision Engineering",
-    desc: "Every board is manufactured to exacting tolerances with advanced CNC drilling, automated optical inspection, and rigorous quality gates.",
-  },
-  {
     title: "Quick Turnaround",
     desc: "From prototype to production, we optimize every step. 48-hour quick-turn available for urgent projects without compromising quality.",
   },
   {
     title: "End-to-End Service",
     desc: "Fabrication, assembly, and procurement under one roof. Streamline your supply chain with a single trusted partner.",
-  },
-  {
-    title: "Quality Assurance",
-    desc: "IPC Class 2 & 3 standards. Every batch undergoes electrical testing, visual inspection, and cross-section analysis when required.",
-  },
+  }
 ];
 
 const About = () => {

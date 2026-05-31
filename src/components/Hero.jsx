@@ -6,11 +6,6 @@ import { useEffect, useState } from "react";
 
 const STAT_DEFS = [
   {
-    label: "Boards Delivered",
-    target: 547,
-    format: (value) => `${Math.round(value)}`,
-  },
-  {
     label: "Quick Turn",
     target: 48,
     format: (value) => `${Math.round(value)}hr`,
@@ -123,7 +118,7 @@ const Hero = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
-            className="mt-16 grid grid-cols-3 gap-8 border-t border-border/50 pt-8"
+            className="mt-16 grid grid-cols-2 gap-8 border-t border-border/50 pt-8"
           >
             {STAT_DEFS.map((stat, index) => (
               <div key={stat.label}>
